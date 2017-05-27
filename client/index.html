@@ -7,6 +7,7 @@
 
     <!-- dependencies -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
     <script>
       // YOU DO NOT NEED TO EDIT THIS CODE
       if (!/(&|\?)username=/.test(window.location.search)) {
@@ -18,6 +19,7 @@
         window.location.search = newSearch;
       }
     </script>
+
     <!-- your scripts -->
     <script src="env/config.js"></script>
     <script src="scripts/app.js"></script>
@@ -26,7 +28,10 @@
     <div id="main">
       <h1>chatterbox</h1>
       <!-- Your HTML goes here! -->
+
+      <select id="roomSelect"></select>
     </div>
-    <div id="chats"></div>
+    <div id="chats">Chats</div>
+    <div id="friends">Friends</div>
   </body>
 </html>
