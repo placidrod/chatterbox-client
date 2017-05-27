@@ -3,9 +3,22 @@
 var app = {
 
   // We likely need to create objects for chatRooms, Friends,  etc... that then link to div's in the html...messages object
+  uniqueRoomNames: [],
+  currentRoom: 'lobby',
+  username() {
+    var step = window.location.search.replace(/\?username=/, '');
+    var stepTwo = step.replace(/%20/, ' ');
+    return stepTwo;
+  },
   init() {
-    this.fetch('http://parse.hrr.hackreactor.com/chatterbox/classes/messages');
+    app.fetch('http://parse.hrr.hackreactor.com/chatterbox/classes/messages');
 
+    setInterval(function() {
+      app.fetch('http://parse.hrr.hackreactor.com/chatterbox/classes/messages/');
+    }, 2000);
+
+    $('#send .submit').on('click', app.handleSubmit());
+    $('#main .username').on('click', app.handleUserNameClick());
   },
   send(message) {
     $.ajax({// This is the url you should use to communicate with the parse API server.
@@ -30,11 +43,13 @@ var app = {
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Fetched');
+        app.clearMessages();
         for (var i = 0; i < data.results.length; i += 1) {
-        // escape(data.result[i].username)
-        // escape(data.result[i].text)
-        // escape(data.result[i].rom)
           app.renderMessage((data.results[i]));
+          if (app.uniqueRoomNames.indexOf(data.results[i].roomname) === -1) {
+            app.uniqueRoomNames.push(data.results[i].roomname);
+            app.renderRoom(data.results[i].roomname);
+          }
         }
       },
       error: function (data) {
@@ -46,11 +61,16 @@ var app = {
     $('#chats').empty();
   },
   renderMessage(message) {
-    //message = app.e
+    message.username = app.escape(message.username);
+    message.text = app.escape(message.text);
+    message.roomname = app.escape(message.roomname);//remember to resafe it elsewhere
+    // console.log(message.text);
+
     var messageDiv = `
       <div class="chat">
       <p class="username">${message.username}</p>
       <p class="text">${message.text}</p>
+      <p class="roomname">${message.roomname}</p>
       </div>
     `; // <p class="roomname">${message.roomname}</p>
     $('#chats').prepend(messageDiv);
@@ -61,8 +81,36 @@ var app = {
   handleUserNameClick() {
 
   },
-  escape(text) {
-    return;//regexed'version of that text/escaped thing
+  handleSubmit() {
+    $('#send').submit();
+
+  },
+  escape(str) {
+    // return str;
+    var replaceChars = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt',
+      '"': '&quot;',
+      "'": '&#39;',
+      '`': '&#96;',
+      ' ': '&#32;',
+      '!': '&#33;',
+      '@': '&#64;',
+      '$': '&#36;',
+      '%': '&#37;',
+      '(': '&#40;',
+      ')': '&#41;',
+      '=': '&#61;',
+      '+': '&#43;',
+      '{': '&#123;',
+      '}': '&#125;',
+      '[': '&#91;',
+      ']': '&#93;'
+    };
+    return str.replace(/[&<>"'`\s!@$%()=+{}[]]/g, function(char) {
+      return replaceChars[char];
+    });
   },
 };
 
