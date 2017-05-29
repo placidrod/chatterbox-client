@@ -4,6 +4,7 @@
 var app = {
   messagesUrl: 'http://parse.hrr.hackreactor.com/chatterbox/classes/messages',
   roomname: 'lobby',
+  roomnames: {},
   username: '',
   messages: [],
   lastMessageID: null,
@@ -13,19 +14,46 @@ var app = {
 
     app.fetch(app.messagesUrl);
 
+    $('#send').on('submit', app.handleSubmit);
+
+    // $('#roomSelect').on('change', app.renderRoom);
+
     // setInterval(function() {
     //   app.fetch(app.messagesUrl);
     // }, 3000);
   },
 
+  renderRoomNames(messages) {
+    messages.forEach(function(message) {
+      if(!app.roomnames[message.roomname]) {
+        app.roomnames[message.roomname] = true;
+        app.renderRoom(message.roomname);
+      }
+    });
+  },
+
+  handleSubmit(event) {
+    event.preventDefault();
+    // console.log($('#text').val());
+    var message = {
+      username: app.username,
+      roomname: app.roomname,
+      text: $('#text').val()
+    };
+
+    app.send(message);
+
+  },
+
   send(message) {
-    $.ajax({// This is the url you should use to communicate with the parse API server.
+    $.ajax({
       url: 'http://parse.hrr.hackreactor.com/chatterbox/classes/messages',
       type: 'POST',
       data: JSON.stringify(message),
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Message sent');
+        app.fetch(app.messagesUrl);
       },
       error: function (data) {
         console.error('chatterbox: Failed to send message', data);
@@ -33,14 +61,18 @@ var app = {
     });
   },
 
-  fetch(url) { // fetch may need to take an argument of a url later to specify which subdirectory to fetch/get
+  fetch(url) {
     $.ajax({
       url: url,
       type: 'GET',
+      data: {
+        order: '-createdAt'
+      },
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Fetched');
         app.renderMessages(data.results);
+        app.renderRoomNames(data.results);
       },
       error: function (data) {
         console.error('chatterbox: Failed to fetch', data);
@@ -60,8 +92,14 @@ var app = {
     app.lastMessageID = lastFetchedMessageID;
   },
 
+  checkValid(string) {
+    return !!string;
+  },
+
   checkValidMessage(message) {
-    return !!message.username && !!message.text && !!message.roomname;
+    return app.checkValid(message.username)
+           && app.checkValid(message.text)
+           && app.checkValid(message.roomname);
   },
 
   renderMessages(messages) {
@@ -97,15 +135,16 @@ var app = {
   },
 
   renderRoom(room) {
-    $('#roomSelect').append(`<option value="${room}"> ${room} </option>`);
+    if(!app.checkValid(room)) {
+      return;
+    }
+
+    var $option = $('<option />');
+    $option.val(room).text(room);
+    $('#roomSelect').append($option);
   },
 
   handleUserNameClick() {
-
-  },
-
-  handleSubmit() {
-    $('#send').submit();
 
   }
 };
