@@ -16,7 +16,7 @@ var app = {
 
     $('#send').on('submit', app.handleSubmit);
 
-    // $('#roomSelect').on('change', app.renderRoom);
+    $('#roomSelect').on('change', app.renderRoom);
 
     // setInterval(function() {
     //   app.fetch(app.messagesUrl);
@@ -27,9 +27,27 @@ var app = {
     messages.forEach(function(message) {
       if(!app.roomnames[message.roomname]) {
         app.roomnames[message.roomname] = true;
-        app.renderRoom(message.roomname);
+        app.renderRoomName(message.roomname);
       }
     });
+  },
+
+  renderRoomName(roomName) {
+    if(!app.checkValid(roomName)) {
+      return;
+    }
+
+    var $option = $('<option />');
+    $option.val(roomName).text(roomName);
+    $('#roomSelect').append($option);
+  },
+
+  renderRoom() {
+    var selectedRoom = $('#roomSelect').val();
+    var filteredMessagesByRoom = app.messages.filter(function(message){
+      return message.roomname === selectedRoom;
+    });
+    app.renderMessages(filteredMessagesByRoom);
   },
 
   handleSubmit(event) {
@@ -71,6 +89,16 @@ var app = {
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Fetched');
+
+        var messages = data.results;
+
+        if(!app.confirmNewMessagesFetched(messages)) {
+          return;
+        }
+
+        app.messages = messages;
+
+        app.setLastMessageID(messages[0].objectId);
         app.renderMessages(data.results);
         app.renderRoomNames(data.results);
       },
@@ -103,12 +131,7 @@ var app = {
   },
 
   renderMessages(messages) {
-    console.log(messages);
-    if(!app.confirmNewMessagesFetched(messages)) {
-      return;
-    }
-
-    app.setLastMessageID(messages[0].objectId);
+    // console.log(messages);
 
     app.clearMessages();
 
@@ -132,16 +155,6 @@ var app = {
     $chat.append($text);
 
     $('#chats').append($chat);
-  },
-
-  renderRoom(room) {
-    if(!app.checkValid(room)) {
-      return;
-    }
-
-    var $option = $('<option />');
-    $option.val(room).text(room);
-    $('#roomSelect').append($option);
   },
 
   handleUserNameClick() {
