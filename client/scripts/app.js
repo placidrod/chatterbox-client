@@ -159,6 +159,7 @@ var app = {
     if(app.friends[$username.text()]) {
       $chat.addClass('friend');
     }
+    $chat.append('<br>');
 
     var $text = $('<span class="text" />');
     $text.text(message.text);
